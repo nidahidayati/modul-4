@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toko Elektronik Cepat</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; }
+        header { text-align: center; margin-bottom: 30px; }
+        #current-time { font-size: 1.2em; color: #555; }
+        .container {
+            display: grid;
+            grid-template-columns: 2fr 1fr; /* Tampilan utama dan daftar produk */
+            gap: 20px;
+        }
+        #product-display {
+            border: 1px solid #ccc;
+            padding: 20px;
+            text-align: center;
+        }
+        #product-image-container {
+            margin-bottom: 15px;
+        }
+        #slideshow-image {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+        .slideshow-buttons button {
+            margin: 5px;
+            padding: 8px 15px;
+            cursor: pointer;
+        }
+        #product-details h3 {
+            margin-bottom: 5px;
+        }
+        #product-list {
+            border: 1px solid #ccc;
+            padding: 20px;
+        }
+        #product-list ul {
+            list-style: none;
+            padding: 0;
+        }
+        #product-list li {
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+        }
+        #product-list li:hover {
+            background-color: #f0f0f0;
+        }
+        #order-form {
+            margin-top: 30px;
+            border: 1px solid #ccc;
+            padding: 20px;
+        }
+        #order-form label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        #order-form input[type="text"],
+        #order-form input[type="number"] {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+        }
+        #order-form button {
+            padding: 10px 20px;
+            background-color: steelblue;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .error {
+            color: red;
+            font-size: 0.9em;
+        }
+        #order-summary {
+            margin-top: 20px;
+            border: 1px solid #eee;
+            padding: 15px;
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body onload="initApp()">
+    <header>
+        <h1>Toko Elektronik Cepat</h1> 
+        <p id="current-time"></p>
+    </header>
+
+    <div class="container">
+        <div id="product-display">
+            <div id="product-image-container">
+                <img id="slideshow-image" src="" alt="Product Image" width="500">
+                <div class="slideshow-buttons">
+                    <button onclick="gantiGambar(-1)">Previous</button>
+                    <button onclick="gantiGambar(1)">Next</button>
+                </div>
+            </div>
+            <div id="product-details">
+                <h3 id="product-name"></h3>
+                <p id="product-price"></p>
+            </div>
+        </div>
+
+        <div id="product-list">
+            <h2>Daftar Produk</h2>
+            <ul id="daftar-produk">
+                </ul>
+        </div>
+    </div>
+
+    <div id="order-form">
+        <h2>Form Pemesanan</h2>
+        <form onsubmit="return handleOrder()">
+            <label for="namaPemesan">Nama Pemesan:</label>
+            <input type="text" id="namaPemesan" name="namaPemesan"><br>
+            <small id="nama-error" class="error"></small><br>
+
+            <label for="jumlahPesan">Jumlah Pesan:</label>
+            <input type="number" id="jumlahPesan" name="jumlahPesan" min="1"><br>
+            <small id="jumlah-error" class="error"></small><br>
+
+            <label for="kodePromo">Kode Promo:</label>
+            <input type="text" id="kodePromo" name="kodePromo"><br>
+
+            <button type="submit">Pesan Sekarang</button>
+        </form>
+        <div id="order-summary">
+            </div>
+    </div>
+
+    <script>
+        // 1. Header & Waktu Transaksi
+function updateJam() {
+    const sekarang = new Date();
+    let jam = sekarang.getHours();
+    let menit = sekarang.getMinutes();
+    let detik = sekarang.getSeconds();
+
+    // Tambahkan nol di depan jika angka < 10
+    jam = (jam < 10 ? "0" : "") + jam;
+    menit = (menit < 10 ? "0" : "") + menit;
+    detik = (detik < 10 ? "0" : "") + detik;
+
+    const waktuString = sekarang.toLocaleDateString('id-ID') + " " + jam + ":" + menit + ":" + detik;
+    document.getElementById("current-time").innerText = waktuString;
+}
+
+function jalankanJam() {
+    setInterval(updateJam, 1000); // Panggil updateJam setiap 1000 milidetik (1 detik)
+    updateJam(); // Panggil sekali segera untuk menghindari penundaan
+}
+
+// 2. & 3. Tampilan Produk & Daftar Produk
+const products = [ // Gunakan array untuk menyimpan data produk
+    {
+        name: "Laptop Gaming",
+        price: 12000000,
+        images: [
+            "laptop 1.jpg",
+            "laptop 2.jpg",
+            "laptop 3.jpg",
+        ]
+    },
+    {
+        name: "Smartphone Terbaru",
+        price: 8000000,
+        images: [
+            "smartphone 1.jpg",
+            "smartphone 2.jpg",
+        ]
+    },
+    {
+        name: "Smart TV 4K",
+        price: 15000000,
+        images: [
+            "tv 1.jpg",
+            "tv 2.jpg",
+        ]
+    }
+];
+
+let currentProductIndex = 0;
+let currentImageIndex = 0;
+
+function displayProduct(productIndex) { // Menampilkan produk pertama dari array saat halaman dimuat
+    currentProductIndex = productIndex;
+    currentImageIndex = 0; // Atur ulang indeks gambar saat produk berubah
+    const product = products[currentProductIndex];
+
+    document.getElementById("product-name").innerText = product.name; // Di bawah slideshow, tampilkan nama dan harga produk yang sedang aktif.
+    document.getElementById("product-price").innerText = "Harga: Rp " + product.price.toLocaleString('id-ID'); // Di bawah slideshow, tampilkan nama dan harga produk yang sedang aktif.
+    document.getElementById("slideshow-image").src = product.images[currentImageIndex]; // Gunakan Image Slideshow (Praktikum 11) untuk menampilkan gambar-gambar produk yang sedang aktif.
+}
+
+function gantiGambar(arah) { // Pengguna bisa klik "Next" atau "Previous" untuk melihat gambar lain dari produk tersebut.
+    const product = products[currentProductIndex];
+    currentImageIndex += arah;
+
+    if (currentImageIndex >= product.images.length) { // Jika sudah gambar terakhir, kembali ke awal
+        currentImageIndex = 0;
+    }
+    if (currentImageIndex < 0) { // Jika sudah gambar pertama dan menekan previous, pergi ke akhir
+        currentImageIndex = product.images.length - 1;
+    }
+    document.getElementById("slideshow-image").src = product.images[currentImageIndex]; // Mengubah properti src dari sebuah elemen <img>, kita dapat membuat slideshow.
+}
+
+function populateProductList() { // Gunakan perulangan (Praktikum 4) untuk menampilkan seluruh produk yang ada di array sebagai daftar yang bisa diklik.
+    const daftarProdukUl = document.getElementById("daftar-produk");
+    daftarProdukUl.innerHTML = "";
+    for (let i = 0; i < products.length; i++) { // Perulangan for sangat efektif untuk mengolah data yang ada di dalam array dan menampilkannya sebagai daftar (list) di HTML.
+        const li = document.createElement("li");
+        li.innerText = products[i].name + " - Rp " + products[i].price.toLocaleString('id-ID');
+        li.setAttribute("data-index", i);
+        li.onclick = function() { // Ketika salah satu item di daftar ini diklik, display utama (slideshow, nama, harga) harus berganti sesuai produk yang dipilih.
+            displayProduct(parseInt(this.getAttribute("data-index")));
+        };
+        daftarProdukUl.appendChild(li);
+    }
+}
+
+// 4. & 5. Form Pemesanan & Logika Pemesanan
+function handleOrder() {
+    const namaPemesan = document.getElementById("namaPemesan").value;
+    const jumlahPesan = parseInt(document.getElementById("jumlahPesan").value);
+    const kodePromo = document.getElementById("kodePromo").value;
+
+    const namaError = document.getElementById("nama-error");
+    const jumlahError = document.getElementById("jumlah-error");
+    namaError.innerHTML = "";
+    jumlahError.innerHTML = "";
+
+    let isValid = true;
+
+    // Validasi Form (Praktikum 5): Nama pemesan dan jumlah tidak boleh kosong. Jumlah harus lebih dari 0.
+    if (namaPemesan === "") { // Kita bisa menggunakan if untuk memeriksa apakah sebuah input kosong ("") dan memberikan peringatan kepada pengguna.
+        namaError.innerHTML = "Nama pemesan tidak boleh kosong!";
+        isValid = false;
+    }
+    if (isNaN(jumlahPesan) || jumlahPesan <= 0) {
+        jumlahError.innerHTML = "Jumlah harus angka dan lebih dari 0!";
+        isValid = false;
+    }
+
+    if (!isValid) {
+        return false; // Mencegah form untuk dikirim
+    }
+
+    const product = products[currentProductIndex];
+    let subtotal = product.price * jumlahPesan; // Subtotal = harga_produk * jumlah_pesan.
+    let potongan = 0;
+    let totalAkhir = subtotal;
+
+    // Logika Percabangan Diskon (Praktikum 3): Jika kode promo yang dimasukkan (setelah diubah ke huruf besar menggunakan metode objek String) adalah "DISKON10", berikan potongan 10%.
+    if (kodePromo.toUpperCase() === "DISKON10") { // Objek String menyediakan banyak metode (method) untuk memanipulasi teks. Contohnya .toUpperCase() untuk mengubah menjadi huruf kapital.
+        potongan = subtotal * 0.10;
+        totalAkhir = subtotal - potongan;
+    }
+
+    // Generate Order ID (Praktikum 9): Buat ID Pesanan unik, contoh: INV- diikuti 5 digit angka acak (gunakan Math.random()).
+    // Math.random() menghasilkan angka acak antara 0 dan 1. Kombinasi keduanya sangat berguna untuk menghasilkan angka acak dalam rentang tertentu.
+    const orderId = "INV-" + (Math.floor(Math.random() * 90000) + 10000);
+
+    // Tampilkan Struk/Ringkasan Pesanan di area output, berisi: Order ID, Nama Pemesan, Nama Produk, Jumlah, Subtotal, Potongan, dan Total Akhir.
+    const orderSummaryElement = document.getElementById("order-summary");
+    orderSummaryElement.innerHTML = `
+        <h3>Ringkasan Pesanan</h3>
+        <p><strong>Order ID:</strong> ${orderId}</p>
+        <p><strong>Nama Pemesan:</strong> ${namaPemesan}</p>
+        <p><strong>Nama Produk:</strong> ${product.name}</p>
+        <p><strong>Jumlah:</strong> ${jumlahPesan}</p>
+        <p><strong>Subtotal:</strong> Rp ${subtotal.toLocaleString('id-ID')}</p>
+        <p><strong>Potongan:</strong> Rp ${potongan.toLocaleString('id-ID')}</p>
+        <p><strong>Total Akhir:</strong> Rp ${totalAkhir.toLocaleString('id-ID')}</p>
+    `;
+
+    alert("Pemesanan berhasil!");
+    return false; // Mencegah pengiriman formulir untuk tetap berada di halaman yang sama
+}
+
+// Pengaturan awal aplikasi
+function initApp() {
+    jalankanJam(); // Mulai jam dinamis
+    populateProductList(); // Mengisi daftar produk saat halaman dimuat
+    displayProduct(0); // Menampilkan produk pertama secara default
+}
+    </script>
+    </body>
+</html>

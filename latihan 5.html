@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Latihan Validasi Form</title>
+    <style>
+        .error {
+            color: red;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <h2>Form Registrasi</h2>
+    <form onsubmit="return validasi()">
+        <label for="name">Nama Lengkap</label><br>
+        <input type="text" id="name" name="name"><br>
+        <small id="name-error" class="error"></small><br><br>
+
+        <label for="email">Email</label><br>
+        <input type="email" id="email" name="email"><br>
+        <small id="email-error" class="error"></small><br><br>
+
+        <input type="submit" value="Daftar">
+    </form>
+
+    <script>
+        function validasi() {
+            var inputName = document.getElementById("name").value;
+            var inputEmail = document.getElementById("email").value; // Ambil nilai input email
+
+            var nameErrorElement = document.getElementById("name-error");
+            var emailErrorElement = document.getElementById("email-error"); // Dapatkan elemen error untuk email
+
+            // Reset pesan error sebelumnya
+            nameErrorElement.innerHTML = "";
+            emailErrorElement.innerHTML = "";
+
+            var isValid = true; // Flag untuk melacak apakah formulir valid
+
+            if (inputName === "") {
+                nameErrorElement.innerHTML = "Nama tidak boleh kosong!";
+                isValid = false;
+            }
+
+            if (inputEmail === "") { // Validasi untuk input email
+                emailErrorElement.innerHTML = "Email tidak boleh kosong!";
+                isValid = false;
+            }
+
+            if (isValid) {
+                alert("Registrasi berhasil!");
+                return true; // Izinkan form untuk dikirim
+            } else {
+                return false; // Mencegah form untuk dikirim
+            }
+        }
+    </script>
+</body>
+</html>
